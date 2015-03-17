@@ -132,7 +132,7 @@ void PrintProps(amf::AMFPropertyStorage *props)
 {
 
 	amf::AMFBuffer* buffer = nullptr;
-	amf_int32 count = props->GetPropertyCount();
+	amf_size count = props->GetPropertyCount();
 	for (amf_int32 i = 0; i < count; i++)
 	{
 		wchar_t name[4096];
@@ -384,7 +384,7 @@ bool VCEEncoder::Init()
 	//amf_increase_timer_precision();
 
 	res = pAMFCreateContext(&mContext);
-	RETURNIFFAILED(res, TEXT("AMFCreateContext failed. %d"), res);
+	RETURNIFFAILED(res, TEXT("AMFCreateContext failed. %s"), amf::AMFGetResultText(res));
 
 	// Select engine. DX11 looks be best for D3D11 -> OpenCL -> AMF interop.
 	mEngine = (uint32_t)AppConfig->GetInt(TEXT("VCE Settings"), TEXT("AMFEngine"), 2);
@@ -396,7 +396,7 @@ bool VCEEncoder::Init()
 		RETURNIFFAILED(res, TEXT("D3D11 device init failed. %d\n"), res);
 		//TODO Cannot find encoder with mD3Ddevice because "Device removed"
 		res = mContext->InitDX11(mDX11Device.GetDevice(), amf::AMF_DX11_0);
-		RETURNIFFAILED(res, TEXT("AMF context init with D3D11 failed. %d\n"), res);
+		RETURNIFFAILED(res, TEXT("AMF context init with D3D11 failed. %s\n"), amf::AMFGetResultText(res));
 		mCanInterop = true;
 		if (AppConfig->GetInt(TEXT("VCE Settings"), TEXT("NoInterop"), 0) != 0)
 			mCanInterop = false;
@@ -502,7 +502,7 @@ bool VCEEncoder::Init()
 	else if (mIDRPeriod < 0) //Allow manual override
 		mIDRPeriod = 0;
 
-	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_IDR_PERIOD, static_cast<amf_int64>(mIDRPeriod));
+	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_IDR_PERIOD, mIDRPeriod);
 	RETURNIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_IDR_PERIOD);
 
 	// FIXME This hack probably screws things up, heh.
@@ -646,7 +646,7 @@ bool VCEEncoder::Init()
 
 	if (false && iInt > 0)
 	{
-		res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_HEADER_INSERTION_SPACING, mIDRPeriod < 1001 ? mIDRPeriod : 1000);
+		res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_HEADER_INSERTION_SPACING, MIN((amf_uint32)mIDRPeriod, 1000));
 		LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_HEADER_INSERTION_SPACING);
 	}
 
@@ -1120,9 +1120,6 @@ void VCEEncoder::ProcessBitstream(amf::AMFBufferPtr &buff)
 	const static uint8_t start_seq[] = { 0, 0, 1 };
 	start = std::search(start, end, start_seq, start_seq + 3);
 
-	if (mTmpFile)
-		fwrite(start, 1, buff->GetSize(), mTmpFile);
-
 	//FIXME
 	uint64_t dts = 0;// outputTimestamp;
 	uint64_t out_pts = buff->GetPts() / MS_TO_100NS;
@@ -1145,84 +1142,15 @@ void VCEEncoder::ProcessBitstream(amf::AMFBufferPtr &buff)
 	}
 	size_t nalNum = nalOut.Num();
 
-	//XXX mTSqueue is not thread-safe
-	/*assert(!mTSqueue.empty());
-
-	if (!mOffsetTS)
-		mOffsetTS = mTSqueue.back();
-
-	uint64_t ts = mTSqueue.front();
-	mTSqueue.pop();*/
-
 	uint32_t diff = 0;
-	//buff->GetProperty(L"OUTPUTTS", &diff);
-
-	//dts = (ts - mOffsetTS);
-	int32_t timeOffset = 0;// int(out_pts - dts);// int(out_pts - dts);
-	/*if (frameType == AMF_VIDEO_ENCODER_OUTPUT_DATA_TYPE_IDR)
-		timeOffset = 0;
-	if (frameType == AMF_VIDEO_ENCODER_OUTPUT_DATA_TYPE_P)
-		timeOffset = 16;
-	if (frameType == AMF_VIDEO_ENCODER_OUTPUT_DATA_TYPE_B)
-		timeOffset = -17;*/
-	/*timeOffset += frameShift;
-
-	if (nalNum && timeOffset > 0)
-	{
-		frameShift -= timeOffset;
-		timeOffset = 0;
-	}*/
-
-	/*OSDebugOut(TEXT("%s ts: %lld pts: %lld dts: %lld toff: %d pts-dts: %d\n"),
-		frameTypes[frameType], mOffsetTS, out_pts, dts, timeOffset, int(out_pts - dts));*/
+	int32_t timeOffset = 0;
 
 	timeOffset = htonl(timeOffset);
 	BYTE *timeOffsetAddr = ((BYTE*)&timeOffset) + 1;
 
 	PacketType bestType = PacketType_VideoDisposable;
 	bool bFoundFrame = false;
-	bool bSPS = false;
-	UINT64 pos = 5;
-
-	for (unsigned int i = 0; i < nalNum; i++)
-	{
-		x264_nal_t &nal = nalOut[i];
-		//TODO Check if B-frames really want SPS/PPS from IDR or if there's any diff at all.
-		if (!mHdrPacket && nal.i_type == NAL_SLICE_IDR)
-		{
-			mHdrSize = buff->GetSize();
-			mHdrPacket = new uint8_t[mHdrSize];
-			memcpy(mHdrPacket, buff->GetNative(), mHdrSize);
-		}
-
-		if (nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE)
-		{
-			BYTE *skip = nal.p_payload;
-			while (*(skip++) != 0x1);
-			int skipBytes = (int)(skip - nal.p_payload);
-
-			if (!bFoundFrame)
-			{
-				// Reusing buffer
-				if (bufferedOut->pBuffer.Num() >= 5)
-				{
-					BYTE *ptr = bufferedOut->pBuffer.Array();
-					ptr[0] = (nal.i_type == NAL_SLICE_IDR) ? 0x17 : 0x27;
-					ptr[1] = 1;
-					memcpy(ptr + 2, timeOffsetAddr, 3);
-				}
-				else
-				{
-					bufferedOut->pBuffer.Add((nal.i_type == NAL_SLICE_IDR) ? 0x17 : 0x27);
-					bufferedOut->pBuffer.Add(1);
-					bufferedOut->pBuffer.AppendArray(timeOffsetAddr, 3);
-				}
-
-				bFoundFrame = true;
-			}
-			break;
-		}
-	}
+	bufferedOut->pBuffer.SetSize(0);
 
 	for (unsigned int i = 0; i < nalNum; i++)
 	{
@@ -1274,20 +1202,16 @@ void VCEEncoder::ProcessBitstream(amf::AMFBufferPtr &buff)
 				{
 					seiData.Clear();
 					BufferOutputSerializer packetOut(seiData);
-					packetOut.Seek(pos, 0);
 					packetOut.OutputDword(htonl(sei_size + 2));
 					packetOut.Serialize(sei_start - 1, sei_size + 1);
 					packetOut.OutputByte(0x80);
-					pos = packetOut.GetPos();
 				}
 				else
 				{
 					BufferOutputSerializer packetOut(bufferedOut->pBuffer);
-					packetOut.Seek(pos, 0);
 					packetOut.OutputDword(htonl(sei_size + 2));
 					packetOut.Serialize(sei_start - 1, sei_size + 1);
 					packetOut.OutputByte(0x80);
-					pos = packetOut.GetPos();
 				}
 				sei_start += sei_size;
 
@@ -1304,10 +1228,8 @@ void VCEEncoder::ProcessBitstream(amf::AMFBufferPtr &buff)
 			int newPayloadSize = (nal.i_payload - skipBytes);
 
 			BufferOutputSerializer packetOut(bufferedOut->pBuffer);
-			packetOut.Seek(pos, 0);
 			packetOut.OutputDword(htonl(newPayloadSize));
 			packetOut.Serialize(nal.p_payload + skipBytes, newPayloadSize);
-			pos = packetOut.GetPos();
 		}
 		else if (nal.i_type == NAL_SLICE_IDR || nal.i_type == NAL_SLICE)
 		{
@@ -1315,22 +1237,27 @@ void VCEEncoder::ProcessBitstream(amf::AMFBufferPtr &buff)
 			while (*(skip++) != 0x1);
 			int skipBytes = (int)(skip - nal.p_payload);
 
-			/*if (!bFoundFrame)
+			if (!bFoundFrame)
 			{
 				bufferedOut->pBuffer.Insert(0, (nal.i_type == NAL_SLICE_IDR) ? 0x17 : 0x27);
 				bufferedOut->pBuffer.Insert(1, 1);
 				bufferedOut->pBuffer.InsertArray(2, timeOffsetAddr, 3);
 
+				if (!mHdrPacket && nal.i_type == NAL_SLICE_IDR)
+				{
+					mHdrSize = buff->GetSize();
+					mHdrPacket = new uint8_t[mHdrSize];
+					memcpy(mHdrPacket, buff->GetNative(), mHdrSize);
+				}
+
 				bFoundFrame = true;
-			}*/
+			}
 
 			int newPayloadSize = (nal.i_payload - skipBytes);
 			BufferOutputSerializer packetOut(bufferedOut->pBuffer);
-			packetOut.Seek(pos, 0);
 
 			packetOut.OutputDword(htonl(newPayloadSize));
 			packetOut.Serialize(nal.p_payload + skipBytes, newPayloadSize);
-			pos = packetOut.GetPos();
 
 			// P is _HIGH, I is _HIGHEST
 			switch (nal.i_ref_idc)
@@ -1346,23 +1273,8 @@ void VCEEncoder::ProcessBitstream(amf::AMFBufferPtr &buff)
 			BYTE *skip = nal.p_payload;
 			while (*(skip++) != 0x1);
 			int skipBytes = (int)(skip - nal.p_payload);
-			/*
-			if (bufferedOut->pBuffer.Num() >= 5)
-			{
-				BYTE *ptr = bufferedOut->pBuffer.Array();
-				ptr[0] = 0x57;
-				ptr[1] = 1;
-				memcpy(ptr + 2, timeOffsetAddr, 3);
-			}
-			else
-			{
-				bufferedOut->pBuffer.Add(0x57);
-				bufferedOut->pBuffer.Add(1);
-				bufferedOut->pBuffer.AppendArray(timeOffsetAddr, 3);
-			}*/
 
 			BufferOutputSerializer packetOut(bufferedOut->pBuffer);
-			packetOut.Seek(pos, 0);
 			int newPayloadSize = (nal.i_payload - skipBytes);
 
 			packetOut.OutputDword(htonl(newPayloadSize));
@@ -1376,36 +1288,12 @@ void VCEEncoder::ProcessBitstream(amf::AMFBufferPtr &buff)
 
 			packetOut.OutputDword(htonl(newPayloadSize));
 			packetOut.Serialize(pps.p_payload + skipBytes, newPayloadSize);
-			pos = packetOut.GetPos();
-
-			/*DataPacket packet;
-			packet.lpPacket = bufferedOut->pBuffer.Array();
-			packet.size = (UINT)pos;
-
-			decltype(bufferedOut) tmp = bufferedOut;
-
-			packetTypes << PacketType::PacketType_VideoHighest;
-			packets << packet;
-
-			if (!mOutputQueue.empty())
-			{
-				bufferedOut = mOutputQueue.front();
-				mOutputQueue.pop();
-			}
-			else
-				bufferedOut = new OutputList;
-			pos = 5;
-			mOutputQueue.push(tmp);*/
 		}
 	}
 
 	//DataPacket packet;
-	//packet.lpPacket = bufferedOut->pBuffer.Array();
-	//packet.size = (UINT)pos; // bufferedOut->pBuffer.Num();
-	bufferedOut->pBuffer.SetSize(pos); //FIXME extra size var or might as well use new pBuffer every time then
 	bufferedOut->type = bestType;
-	bufferedOut->timestamp = out_pts;//buff->GetPts() / MS_TO_100NS;
-
+	bufferedOut->timestamp = out_pts;
 	mOutputProcessedQueue.push(bufferedOut);
 	nalOut.Clear();
 
@@ -1446,7 +1334,7 @@ void VCEEncoder::RequestBuffers(LPVOID buffers)
 
 	if (mClosing)
 	{
-		OSDebugOut(TEXT("Closing. Why are you asking for buffers?\n"));
+		OSDebugOut(TEXT("Closing. Why are you asking for buffers? Idx: %d\n"), (unsigned int)buff->MemId - 1);
 		return;
 	}
 

@@ -42,7 +42,7 @@ typedef struct OutputBuffer
 typedef struct OutputList
 {
 	List<BYTE> pBuffer;
-	uint64_t timestamp;
+	DWORD timestamp;
 	PacketType type;
 } OutputList;
 
