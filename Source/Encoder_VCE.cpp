@@ -36,7 +36,7 @@ static void UnloadModule()
         FreeLibrary(p_vceModule);
     p_vceModule = NULL;
     p_checkVCEHardwareSupport = NULL;
-    p_createVCEEncoder = NULL;
+	p_createVCEEncoder = NULL;
     initFunction = NULL;
 }
 
@@ -70,7 +70,7 @@ void InitVCEEncoder(bool log = true, bool useMFT = false)
     p_checkVCEHardwareSupport = (PCHECKVCEHARDWARESUPPORT)
         GetProcAddress(p_vceModule, "CheckVCEHardwareSupport");
     p_createVCEEncoder = (PCREATEVCEENCODER)
-        GetProcAddress(p_vceModule, "CreateVCEEncoder");
+		GetProcAddress(p_vceModule, "CreateVCEEncoder");
 
     initFunction = (PVCEINITFUNC)
         GetProcAddress(p_vceModule, "InitVCEEncoder");
@@ -130,13 +130,6 @@ VideoEncoder* CreateVCEEncoder(int fps, int width, int height, int quality, CTST
         errors << Str("Encoder.VCE.YUV444IsUnsupported");
         return NULL;
     }*/
-
-    //TODO Maybe can do more, as long as width*height <= 1920*1088?
-    if ((uint32_t)width > 1920 || (uint32_t)height > 1088)
-    {
-        errors << Str("Encoder.VCE.UnsupportedResolution");
-        return NULL;
-    }
 
     if (p_createVCEEncoder == NULL || initFunction == NULL)
         return NULL;

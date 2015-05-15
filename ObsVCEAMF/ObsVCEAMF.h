@@ -4,6 +4,7 @@
 #include <amf\components\VideoEncoderVCECaps.h>
 #include <amf\components\ComponentCaps.h>
 #include <amf\components\VideoEncoderVCE.h>
+#include <amf\components\CapabilityManager.h>
 #ifdef AMF_CORE_STATIC
 #include "DynAMF.h"
 #else
