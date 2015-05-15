@@ -22,14 +22,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 
 typedef bool(__cdecl *PVCEINITFUNC)(ConfigFile **appConfig, VideoEncoder*);
 typedef bool(__cdecl *PCHECKVCEHARDWARESUPPORT)(bool log);
-typedef int(__cdecl *PGETVCEMAXDIM)();
 typedef VideoEncoder* (__cdecl *PCREATEVCEENCODER)(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, ID3D10Device *d3d);
 
 static HMODULE p_vceModule = NULL;
 static PCHECKVCEHARDWARESUPPORT p_checkVCEHardwareSupport = NULL;
 static PCREATEVCEENCODER p_createVCEEncoder = NULL;
-static PGETVCEMAXDIM p_getVCEMaxWidth = NULL;
-static PGETVCEMAXDIM p_getVCEMaxHeight = NULL;
 static PVCEINITFUNC initFunction = NULL;
 static bool bUsingMFT = false;
 
@@ -40,8 +37,6 @@ static void UnloadModule()
     p_vceModule = NULL;
     p_checkVCEHardwareSupport = NULL;
 	p_createVCEEncoder = NULL;
-	p_getVCEMaxWidth = NULL;
-	p_getVCEMaxHeight = NULL;
     initFunction = NULL;
 }
 
@@ -76,10 +71,6 @@ void InitVCEEncoder(bool log = true, bool useMFT = false)
         GetProcAddress(p_vceModule, "CheckVCEHardwareSupport");
     p_createVCEEncoder = (PCREATEVCEENCODER)
 		GetProcAddress(p_vceModule, "CreateVCEEncoder");
-	p_getVCEMaxWidth = (PGETVCEMAXDIM)
-		GetProcAddress(p_vceModule, "GetVCEMaxWidth");
-	p_getVCEMaxHeight = (PGETVCEMAXDIM)
-		GetProcAddress(p_vceModule, "GetVCEMaxHeight");
 
     initFunction = (PVCEINITFUNC)
         GetProcAddress(p_vceModule, "InitVCEEncoder");
@@ -139,14 +130,6 @@ VideoEncoder* CreateVCEEncoder(int fps, int width, int height, int quality, CTST
         errors << Str("Encoder.VCE.YUV444IsUnsupported");
         return NULL;
     }*/
-
-	int maxWidth = p_getVCEMaxWidth();
-	int maxHeight = p_getVCEMaxHeight();
-	if (width > maxWidth || height > maxHeight)
-    {
-        errors << Str("Encoder.VCE.UnsupportedResolution");
-        return NULL;
-    }
 
     if (p_createVCEEncoder == NULL || initFunction == NULL)
         return NULL;

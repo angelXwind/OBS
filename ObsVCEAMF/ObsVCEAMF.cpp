@@ -79,94 +79,6 @@ extern "C" __declspec(dllexport) bool __cdecl CheckVCEHardwareSupport(bool log)
 	return true;
 }
 
-extern "C" __declspec(dllexport) int __cdecl GetVCEMaxWidth()
-{
-	// TODO: It's probably worth sharing the caps manager instead of re-creating it constantly.
-	amf::AMFCapabilityManagerPtr capsManager;
-
-	AMF_RESULT res = AMFCreateCapsManager(&capsManager);
-	LOGIFFAILED(res, TEXT("CreateCapsManager failed (%d)"), res);
-	if (res == AMF_OK)
-	{
-		res = capsManager->InitDX9(NULL);
-		LOGIFFAILED(res, TEXT("CapsManager->InitDX9 failed (%d)"), res);
-		if (res == AMF_OK) // TODO: Using default device because the device setup is done after the resolution check
-		{
-			amf::AMFEncoderCapsPtr encoderCaps;
-			res = capsManager->GetEncoderCaps(AMFVideoEncoderVCE_AVC, &encoderCaps);
-			LOGIFFAILED(res, TEXT("CapsManager->GetEncoderCaps failed (%d)"), res);
-			if (res == AMF_OK)
-			{
-				amf::AMFIOCapsPtr inputCaps, outputCaps;
-				int minWidthIn = 0, maxWidthIn = 0;
-				int minWidthOut = 0, maxWidthOut = 0;
-				res = encoderCaps->GetInputCaps(&inputCaps);
-				LOGIFFAILED(res, TEXT("encoderCaps->GetInputCaps failed (%d)"), res);
-				if (res == AMF_OK)
-				{
-					inputCaps->GetWidthRange(&minWidthIn, &maxWidthIn);
-				}
-				res = encoderCaps->GetOutputCaps(&outputCaps);
-				LOGIFFAILED(res, TEXT("encoderCaps->GetOutputCaps failed (%d)"), res);
-				if (res == AMF_OK)
-				{
-					inputCaps->GetWidthRange(&minWidthOut, &maxWidthOut);
-				}
-
-				capsManager->Terminate();
-				return max(maxWidthIn, maxWidthOut);
-			}
-		}
-	}
-
-	capsManager->Terminate();
-	return 1920; // Defaulting, although if checking fails something is probably wrong.
-}
-
-extern "C" __declspec(dllexport) int __cdecl GetVCEMaxHeight()
-{
-	// TODO: It's probably worth sharing the caps manager instead of re-creating it constantly.
-	amf::AMFCapabilityManagerPtr capsManager;
-
-	AMF_RESULT res = AMFCreateCapsManager(&capsManager);
-	LOGIFFAILED(res, TEXT("CreateCapsManager failed (%d)"), res);
-	if (res == AMF_OK)
-	{
-		res = capsManager->InitDX9(NULL);
-		LOGIFFAILED(res, TEXT("CapsManager->InitDX9 failed (%d)"), res);
-		if (res == AMF_OK) // TODO: Using default device because the device setup is done after the resolution check
-		{
-			amf::AMFEncoderCapsPtr encoderCaps;
-			res = capsManager->GetEncoderCaps(AMFVideoEncoderVCE_AVC, &encoderCaps);
-			LOGIFFAILED(res, TEXT("CapsManager->GetEncoderCaps failed (%d)"), res);
-			if (res == AMF_OK)
-			{
-				amf::AMFIOCapsPtr inputCaps, outputCaps;
-				int minHeightIn = 0, maxHeightIn = 0;
-				int minHeightOut = 0, maxHeightOut = 0;
-				res = encoderCaps->GetInputCaps(&inputCaps);
-				LOGIFFAILED(res, TEXT("encoderCaps->GetInputCaps failed (%d)"), res);
-				if (res == AMF_OK)
-				{
-					inputCaps->GetHeightRange(&minHeightIn, &maxHeightIn);
-				}
-				res = encoderCaps->GetOutputCaps(&outputCaps);
-				LOGIFFAILED(res, TEXT("encoderCaps->GetOutputCaps failed (%d)"), res);
-				if (res == AMF_OK)
-				{
-					inputCaps->GetHeightRange(&minHeightOut, &maxHeightOut);
-				}
-
-				capsManager->Terminate();
-				return max(maxHeightIn, maxHeightOut);
-			}
-		}
-	}
-
-	capsManager->Terminate();
-	return 1088; // Defaulting, although if checking fails something is probably wrong.
-}
-
 extern "C" __declspec(dllexport) VideoEncoder* __cdecl CreateVCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, ID3D10Device *d3d10device)
 {
 	VCEEncoder *enc = new VCEEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR, d3d10device);
@@ -616,6 +528,7 @@ bool VCEEncoder::Init()
 	// No more checks because default is claiming L4.1
 	// L4.1 and 4.0 are basically the same except for bitrate limits. The next interesting level is 3.2 which is minimum level for 720p60, then 3.1 for 720p30.
 
+	// Clamping level to max reported by caps. It seems to be fairly loosely verified, so giving it more than the level 'should' have works to an extent -- particularly higher FPS.
 	level = min(maxLevel, level);
 
 	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_PROFILE_LEVEL, level);

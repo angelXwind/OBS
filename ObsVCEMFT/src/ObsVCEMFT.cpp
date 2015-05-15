@@ -38,18 +38,6 @@ EXPORT_C_(bool) CheckVCEHardwareSupport(bool log)
     return true;
 }
 
-EXPORT_C_(int) GetVCEMaxWidth()
-{
-	// TODO: Is it possible to get the VCE hardware limit here?
-	return 1920;
-}
-
-EXPORT_C_(int) GetVCEMaxHeight()
-{
-	// TODO: Is it possible to get the VCE hardware limit here?
-	return 1088;
-}
-
 EXPORT_C_(VideoEncoder*) CreateVCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, void *d3d10)
 {
 
