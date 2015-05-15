@@ -164,7 +164,7 @@ void mapBuffer(cl_command_queue cmdqueue, InputBuffer &buffer, uint32_t size)
 	f_clFlush(cmdqueue);
 	waitForEvent(inMapEvt);
 	status = f_clReleaseEvent(inMapEvt);
-	buffer.isMapped = true;
+	//buffer.isMapped = true;
 }
 
 void unmapBuffer(cl_command_queue cmdqueue, InputBuffer &buffer)
@@ -180,7 +180,7 @@ void unmapBuffer(cl_command_queue cmdqueue, InputBuffer &buffer)
 
 	waitForEvent(unmapEvent);
 	status = f_clReleaseEvent(unmapEvent);
-	buffer.isMapped = false;
+	//buffer.isMapped = false;
 	buffer.pBuffer = nullptr;
 }
 
@@ -207,7 +207,7 @@ void mapImage(cl_command_queue cmdqueue, InputBuffer &buffer, uint32_t idx, size
 	/*f_clFlush(cmdqueue);
 	waitForEvent(inMapEvt);
 	status = f_clReleaseEvent(inMapEvt);*/
-	buffer.isMapped = true;
+	//buffer.isMapped = true;
 }
 
 void unmapImage(cl_command_queue cmdqueue, InputBuffer &buffer, uint32_t idx)
@@ -223,6 +223,6 @@ void unmapImage(cl_command_queue cmdqueue, InputBuffer &buffer, uint32_t idx)
 
 	waitForEvent(unmapEvent);
 	status = f_clReleaseEvent(unmapEvent);
-	buffer.isMapped = false;
+	//buffer.isMapped = false;
 	buffer.yuv_host_ptr[idx] = nullptr;
 }

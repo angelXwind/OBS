@@ -72,6 +72,18 @@ extern "C" __declspec(dllexport) bool __cdecl CheckVCEHardwareSupport(bool log)
     return true;
 }
 
+extern "C" __declspec(dllexport) int __cdecl GetVCEMaxWidth()
+{
+	// TODO: Is it possible to get the VCE hardware limit here?
+	return 1920;
+}
+
+extern "C" __declspec(dllexport) int __cdecl GetVCEMaxHeight()
+{
+	// TODO: Is it possible to get the VCE hardware limit here?
+	return 1088;
+}
+
 //Keeping it like x264/qsv/nvenc (for now atleast)
 extern "C" __declspec(dllexport) VideoEncoder* __cdecl CreateVCEEncoder(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, ID3D10Device *d3d10)
 {
