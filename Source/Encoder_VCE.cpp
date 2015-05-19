@@ -20,14 +20,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 //XXX AMF probably becomes the one and only
 #include "Main.h"
 
-typedef bool(__cdecl *PVCEINITFUNC)(ConfigFile **appConfig, VideoEncoder*);
+typedef bool(__cdecl *PINITVCEENCODER)(ConfigFile **appConfig, VideoEncoder*);
 typedef bool(__cdecl *PCHECKVCEHARDWARESUPPORT)(bool log);
 typedef VideoEncoder* (__cdecl *PCREATEVCEENCODER)(int fps, int width, int height, int quality, CTSTR preset, bool bUse444, ColorDescription &colorDesc, int maxBitRate, int bufferSize, bool bUseCFR, ID3D10Device *d3d);
 
 static HMODULE p_vceModule = NULL;
 static PCHECKVCEHARDWARESUPPORT p_checkVCEHardwareSupport = NULL;
 static PCREATEVCEENCODER p_createVCEEncoder = NULL;
-static PVCEINITFUNC initFunction = NULL;
+static PINITVCEENCODER p_initVCEEncoder = NULL;
 static bool bUsingMFT = false;
 
 static void UnloadModule()
@@ -36,8 +36,8 @@ static void UnloadModule()
         FreeLibrary(p_vceModule);
     p_vceModule = NULL;
     p_checkVCEHardwareSupport = NULL;
-	p_createVCEEncoder = NULL;
-    initFunction = NULL;
+    p_createVCEEncoder = NULL;
+    p_initVCEEncoder = NULL;
 }
 
 void InitVCEEncoder(bool log = true, bool useMFT = false)
@@ -70,19 +70,18 @@ void InitVCEEncoder(bool log = true, bool useMFT = false)
     p_checkVCEHardwareSupport = (PCHECKVCEHARDWARESUPPORT)
         GetProcAddress(p_vceModule, "CheckVCEHardwareSupport");
     p_createVCEEncoder = (PCREATEVCEENCODER)
-		GetProcAddress(p_vceModule, "CreateVCEEncoder");
-
-    initFunction = (PVCEINITFUNC)
+        GetProcAddress(p_vceModule, "CreateVCEEncoder");
+    p_initVCEEncoder = (PINITVCEENCODER)
         GetProcAddress(p_vceModule, "InitVCEEncoder");
 
-    if (p_checkVCEHardwareSupport == NULL || p_createVCEEncoder == NULL || initFunction == NULL)
+    if (p_checkVCEHardwareSupport == NULL || p_createVCEEncoder == NULL || p_initVCEEncoder == NULL)
     {
         if (log)
             Log(TEXT("Failed loading all symbols from %s"), modName);
         goto error;
     }
 
-    if (!initFunction(&AppConfig, NULL))
+    if (!p_initVCEEncoder(&AppConfig, NULL))
         goto error;
 
     if (log)
@@ -131,11 +130,11 @@ VideoEncoder* CreateVCEEncoder(int fps, int width, int height, int quality, CTST
         return NULL;
     }*/
 
-    if (p_createVCEEncoder == NULL || initFunction == NULL)
+    if (p_createVCEEncoder == NULL || p_initVCEEncoder == NULL)
         return NULL;
 
     VideoEncoder *encoder = p_createVCEEncoder(fps, width, height, quality, preset, bUse444, colorDesc, maxBitRate, bufferSize, bUseCFR, GetD3D());
-    if (!initFunction(&AppConfig, encoder))
+    if (!p_initVCEEncoder(&AppConfig, encoder))
     {
         delete encoder;
         return NULL;
