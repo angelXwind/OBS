@@ -424,7 +424,7 @@ bool DeviceOpenCL::BuildKernels()
 	status = clBuildProgram(m_program, 1, &m_hDeviceIDs[0], flagsStr.c_str(), NULL, NULL);
 	if (status != CL_SUCCESS)
 	{
-		Log(TEXT("clBuildProgram failed."));
+		Log(TEXT("clBuildProgram failed: %d"), status);
 
 		size_t size = 0;
 		if (status == CL_BUILD_PROGRAM_FAILURE && 

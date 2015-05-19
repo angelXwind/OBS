@@ -78,7 +78,7 @@ AMF_RESULT DeviceDX11::Init(amf_uint32 adapterID, bool onlyWithOutputs)
 
     if(pFactory->EnumAdapters(adapterID, &pAdapter) == DXGI_ERROR_NOT_FOUND)
     {
-		Log(TEXT("AdapterID = %d not found."), adapterID);
+        Log(TEXT("AdapterID = %d not found."), adapterID);
         return AMF_FAIL;
     }
 
@@ -114,10 +114,10 @@ AMF_RESULT DeviceDX11::Init(amf_uint32 adapterID, bool onlyWithOutputs)
     D3D_DRIVER_TYPE eDriverType = pAdapter != NULL ? D3D_DRIVER_TYPE_UNKNOWN : D3D_DRIVER_TYPE_HARDWARE;
     hr = D3D11CreateDevice(pAdapter, eDriverType, NULL, createDeviceFlags, featureLevels, _countof(featureLevels),
                 D3D11_SDK_VERSION, &pD3D11Device, &featureLevel, &pD3D11Context);
-	bool isDx111 = true;
+    bool isDx111 = true;
     if(FAILED(hr))
     {
-		isDx111 = false;
+        isDx111 = false;
         Log(L"InitDX11() failed to create HW DX11.1 device ");
         hr = D3D11CreateDevice(pAdapter, eDriverType, NULL, createDeviceFlags, featureLevels + 1, _countof(featureLevels) - 1,
                     D3D11_SDK_VERSION, &pD3D11Device, &featureLevel, &pD3D11Context);
@@ -132,7 +132,7 @@ AMF_RESULT DeviceDX11::Init(amf_uint32 adapterID, bool onlyWithOutputs)
         hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_SOFTWARE, NULL, createDeviceFlags, featureLevels, _countof(featureLevels),
                     D3D11_SDK_VERSION, &pD3D11Device, &featureLevel, &pD3D11Context);
     }
-	else if (!isDx111)
+    else if (!isDx111)
     {
         Log(L"InitDX11() created HW DX11 device");
     }
@@ -177,6 +177,7 @@ void DeviceDX11::EnumerateAdapters(bool onlyWithOutputs)
         ATL::CComPtr<IDXGIAdapter> pAdapter;
         if(pFactory->EnumAdapters(count, &pAdapter) == DXGI_ERROR_NOT_FOUND)
         {
+            Log(TEXT("    No adapter nr %d. End enumeration."), count);
             break;
         }
 
@@ -186,18 +187,20 @@ void DeviceDX11::EnumerateAdapters(bool onlyWithOutputs)
         if(desc.VendorId != 0x1002)
         {
             count++;
+            Log(TEXT("    Skipping non-AMD vendor: %04X"), desc.VendorId);
             continue;
         }
         ATL::CComPtr<IDXGIOutput> pOutput;
         if(onlyWithOutputs && pAdapter->EnumOutputs(0, &pOutput) == DXGI_ERROR_NOT_FOUND)
         {
+            Log(TEXT("    Adapter %d has no outputs, skipping."), count);
             count++;
             continue;
         }
         char strDevice[100];
         _snprintf_s(strDevice, 100, "%X", desc.DeviceId);
 
-        Log(TEXT("    %d: Device ID: %S [%s]"), m_adaptersCount, strDevice, desc.Description);
+        Log(TEXT("    Index %d: Device ID: %S [%s]"), m_adaptersCount, strDevice, desc.Description);
         m_adaptersIndexes[m_adaptersCount] = count;
         m_adaptersCount++;
         count++;
