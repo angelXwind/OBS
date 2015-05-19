@@ -439,6 +439,64 @@ bool VCEEncoder::Init()
 	res = pAMFCreateComponent(mContext, AMFVideoEncoderVCE_AVC, &mEncoder);
 	RETURNIFFAILED(res, TEXT("AMFCreateComponent(encoder) failed. %d"), res);
 
+	//------------------------
+	// Print few caps etc.
+	amf_uint32 maxLevel = 41;
+
+#pragma region Print few caps etc.
+	amf::H264EncoderCapsPtr encCaps;
+
+	if (mEncoder->QueryInterface(amf::AMFH264EncoderCaps::IID(), (void**)&encCaps) == AMF_OK)
+	{
+		VCELog(TEXT("Capabilities:"));
+		TCHAR* accelType[] = {
+			TEXT("NOT_SUPPORTED"),
+			TEXT("HARDWARE"),
+			TEXT("GPU"),
+			TEXT("SOFTWARE")
+		};
+		VCELog(TEXT("  Accel type: %s"), accelType[(encCaps->GetAccelerationType() + 1) % 4]);
+		VCELog(TEXT("  Max bitrate: %d"), encCaps->GetMaxBitrate());
+		//VCELog(TEXT("  Max priority: %d"), encCaps->GetMaxSupportedJobPriority());
+
+		String str;
+		for (int i = 0; i < encCaps->GetNumOfSupportedLevels(); i++)
+		{
+			amf_uint32 level = encCaps->GetLevel(i);
+			str << level << L" ";
+
+			maxLevel = max(maxLevel, level);
+		}
+		VCELog(TEXT("  Levels: %s"), str.Array());
+
+		str.Clear();
+		for (int i = 0; i < encCaps->GetNumOfSupportedProfiles(); i++)
+		{
+			str << encCaps->GetProfile(i) << " ";
+		}
+		VCELog(TEXT("  Profiles: %s"), str.Array());
+
+		amf::AMFIOCapsPtr iocaps;
+		encCaps->GetInputCaps(&iocaps);
+		VCELog(TEXT("  Input mem types:"));
+		for (int i = iocaps->GetNumOfMemoryTypes() - 1; i >= 0; i--)
+		{
+			bool native;
+			amf::AMF_MEMORY_TYPE memType;
+			iocaps->GetMemoryTypeAt(i, &memType, &native);
+			VCELog(TEXT("    %s, native: %d"), amf::AMFGetMemoryTypeName(memType), native);
+		}
+
+		amf_int32 imin, imax;
+		iocaps->GetWidthRange(&imin, &imax);
+		VCELog(TEXT("  Width min/max: %d/%d"), imin, imax);
+		iocaps->GetHeightRange(&imin, &imax);
+		VCELog(TEXT("  Height min/max: %d/%d"), imin, imax);
+	}
+
+	PrintProps(mEncoder);
+#pragma endregion
+
 	// USAGE is a "preset" property so set before anything else
 	amf_int64 usage = 0; //AMF_VIDEO_ENCODER_USAGE_ENUM::AMF_VIDEO_ENCODER_USAGE_LOW_LATENCY;//AMF_VIDEO_ENCODER_USAGE_TRANSCONDING; // typos
 	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_USAGE, usage);
@@ -457,7 +515,23 @@ bool VCEEncoder::Init()
 	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_PROFILE, (amf_int64)profile);
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_PROFILE);
 
-	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_PROFILE_LEVEL, (amf_int64)41);
+	amf_int64 level = (amf_int64)41;
+	int picSize = mWidth * mHeight * mFps;
+	// VCE3/R9 285 supports up to level 5.1 encoding (251,658,240 samples -- 120fps 1080p, 30fps 4k)
+	// No check here for that maximum, because it might be flexible a bit as VCE1/2 are with L4.1. VCE3 requires at least L5.0 property to allow > 1080p.
+	if (picSize > 150994944) // [L5.0 max] Roughly 72 fps @ 1080p
+		level = (amf_int64)51;
+	else if (picSize > 133693440) // [L4.2 max] Roughly 64 fps @ 1080p
+		level = (amf_int64)50;
+	else if (picSize > 62914560) // [L4.1 max] Roughly 30 fps @ 1080p, or 68fps @ 720p
+		level = (amf_int64)42;
+	// No more checks because default is claiming L4.1
+	// L4.1 and 4.0 are basically the same except for bitrate limits. The next interesting level is 3.2 which is minimum level for 720p60, then 3.1 for 720p30.
+
+	// Clamping level to max reported by caps. It seems to be fairly loosely verified, so giving it more than the level 'should' have works to an extent -- particularly higher FPS.
+	level = min(maxLevel, level);
+
+	res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_PROFILE_LEVEL, level);
 	LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_PROFILE_LEVEL);
 
 	//-----------------------
@@ -466,7 +540,6 @@ bool VCEEncoder::Init()
 
 	//-----------------------
 	int quality = AMF_VIDEO_ENCODER_QUALITY_PRESET_SPEED;
-	int picSize = mWidth * mHeight * mFps;
 	if (picSize <= 1280 * 720 * 30)
 		quality = AMF_VIDEO_ENCODER_QUALITY_PRESET_QUALITY;
 	else if (picSize <= 1920 * 1080 * 30)
@@ -654,58 +727,6 @@ bool VCEEncoder::Init()
 	//res = mEncoder->SetProperty(AMF_VIDEO_ENCODER_INTRA_REFRESH_NUM_MBS_PER_SLOT, ((mHeight + 15) & ~15) / 16);
 	//LOGIFFAILED(res, STR_FAILED_TO_SET_PROPERTY, AMF_VIDEO_ENCODER_INTRA_REFRESH_NUM_MBS_PER_SLOT);
 	mEncoder->SetProperty(AMF_VIDEO_ENCODER_DE_BLOCKING_FILTER, true);
-
-	//------------------------
-	// Print few caps etc.
-#pragma region Print few caps etc.
-	amf::H264EncoderCapsPtr encCaps;
-	if (mEncoder->QueryInterface(amf::AMFH264EncoderCaps::IID(), (void**)&encCaps) == AMF_OK)
-	{
-		VCELog(TEXT("Capabilities:"));
-		TCHAR* accelType[] = {
-			TEXT("NOT_SUPPORTED"),
-			TEXT("HARDWARE"),
-			TEXT("GPU"),
-			TEXT("SOFTWARE")
-		};
-		VCELog(TEXT("  Accel type: %s"), accelType[(encCaps->GetAccelerationType() + 1) % 4]);
-		VCELog(TEXT("  Max bitrate: %d"), encCaps->GetMaxBitrate());
-		//VCELog(TEXT("  Max priority: %d"), encCaps->GetMaxSupportedJobPriority());
-
-		String str;
-		for (int i = 0; i < encCaps->GetNumOfSupportedLevels(); i++)
-		{
-			str << encCaps->GetLevel(i) << L" ";
-		}
-		VCELog(TEXT("  Levels: %s"), str.Array());
-
-		str.Clear();
-		for (int i = 0; i < encCaps->GetNumOfSupportedProfiles(); i++)
-		{
-			str << encCaps->GetProfile(i) << " ";
-		}
-		VCELog(TEXT("  Profiles: %s"), str.Array());
-
-		amf::AMFIOCapsPtr iocaps;
-		encCaps->GetInputCaps(&iocaps);
-		VCELog(TEXT("  Input mem types:"));
-		for (int i = iocaps->GetNumOfMemoryTypes() - 1; i >= 0; i--)
-		{
-			bool native;
-			amf::AMF_MEMORY_TYPE memType;
-			iocaps->GetMemoryTypeAt(i, &memType, &native);
-			VCELog(TEXT("    %s, native: %d"), amf::AMFGetMemoryTypeName(memType), native);
-		}
-
-		amf_int32 imin, imax;
-		iocaps->GetWidthRange(&imin, &imax);
-		VCELog(TEXT("  Width min/max: %d/%d"), imin, imax);
-		iocaps->GetHeightRange(&imin, &imax);
-		VCELog(TEXT("  Height min/max: %d/%d"), imin, imax);
-	}
-
-	PrintProps(mEncoder);
-#pragma endregion
 
 	if (!(mOutPollThread = OSCreateThread((XTHREAD)VCEEncoder::OutputPollThread, this)))
 	{
