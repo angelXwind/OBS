@@ -337,7 +337,6 @@ void VCEEncoder::ClearInputBuffer(int i)
 			mInputBuffers[i].yuv_surfaces[k] = nullptr;
 		}
 	}
-	//mInputBuffers[i].isMapped = false;
 	mInputBuffers[i].locked = 0;
 	mInputBuffers[i].inUse = 0;
 
@@ -1472,14 +1471,13 @@ bool VCEEncoder::RequestBuffersDX11(LPVOID buffers)
 	mfxFrameData *buff = (mfxFrameData*)buffers;
 
 	if (buff->MemId
-		//&& mInputBuffers[(unsigned int)buff->MemId - 1].isMapped
 		&& !mInputBuffers[(unsigned int)buff->MemId - 1].locked)
 		return true;
 
 	for (int i = 0; i < MAX_INPUT_BUFFERS; i++)
 	{
 		InputBuffer& inBuf = mInputBuffers[i];
-		if (inBuf.locked || /*inBuf.isMapped ||*/ inBuf.inUse)
+		if (inBuf.locked || inBuf.inUse)
 			continue;
 
 		HRESULT hres = S_OK;
@@ -1526,8 +1524,6 @@ bool VCEEncoder::RequestBuffersDX11(LPVOID buffers)
 		HRETURNIFFAILED(hres, "Failed to map D3D11 texture.");
 
 		inBuf.mem_type = amf::AMF_MEMORY_DX11;
-		inBuf.pBuffer = (uint8_t*)1;
-		//inBuf.isMapped = true;
 		buff->Pitch = map.RowPitch;
 		buff->Y = (mfxU8*)map.pData;
 		buff->UV = buff->Y + (mHeight * buff->Pitch);
@@ -1630,7 +1626,6 @@ bool VCEEncoder::RequestBuffersCL(LPVOID buffers)
 	mfxFrameData *buff = (mfxFrameData*)buffers;
 
 	if (buff->MemId
-		//&& mInputBuffers[(unsigned int)buff->MemId - 1].isMapped
 		&& !mInputBuffers[(unsigned int)buff->MemId - 1].locked
 		)
 		return true;
@@ -1639,7 +1634,7 @@ bool VCEEncoder::RequestBuffersCL(LPVOID buffers)
 	for (int i = 0; i < MAX_INPUT_BUFFERS; ++i)
 	{
 		InputBuffer &inBuf = mInputBuffers[i];
-		if (/*inBuf.isMapped ||*/
+		if (
 			inBuf.locked ||
 			inBuf.inUse)// ||
 			//!inBuf.yuv_surfaces[0]) //Out of memory?
@@ -1684,7 +1679,6 @@ bool VCEEncoder::RequestBuffersCL(LPVOID buffers)
 
 		buff->Y = (mfxU8*)inBuf.yuv_surfaces[0];
 		buff->UV = (mfxU8*)inBuf.yuv_surfaces[1];
-		//inBuf.isMapped = true;
 		buff->MemId = mfxMemId(i + 1);
 		_InterlockedCompareExchange(&(inBuf.inUse), 1, 0);
 		_InterlockedCompareExchange(&(inBuf.locked), 0, 1);
