@@ -310,9 +310,9 @@ void VCEEncoder::ClearInputBuffer(int i)
 		{
 			ID3D11DeviceContext *d3dcontext = nullptr;
 			mDX11Device.GetDevice()->GetImmediateContext(&d3dcontext);
-			d3dcontext->Unmap(mInputBuffers[i].pTex, 0);
-			mInputBuffers[i].pTex->Release();
-			mInputBuffers[i].pTex = nullptr;
+			ID3D11Texture2D* pTex = static_cast<ID3D11Texture2D*>(mInputBuffers[i].pBuffer);
+			d3dcontext->Unmap(pTex, 0);
+			pTex->Release();
 			d3dcontext->Release();
 		}
 		else if (mInputBuffers[i].mem_type == amf::AMF_MEMORY_HOST)
@@ -321,24 +321,12 @@ void VCEEncoder::ClearInputBuffer(int i)
 		}
 		else if (mInputBuffers[i].mem_type == amf::AMF_MEMORY_DX9)
 		{
-			if (mInputBuffers[i].pBuffer > (uint8_t*)1)
-				delete[] mInputBuffers[i].pBuffer;
-
-			if (mInputBuffers[i].pSurface9)
-			{
-				mInputBuffers[i].pSurface9->UnlockRect();
-				mInputBuffers[i].pSurface9->Release();
-				mInputBuffers[i].pSurface9 = nullptr;
-			}
+			IDirect3DSurface9* pSurf = static_cast<IDirect3DSurface9*>(mInputBuffers[i].pBuffer);
+			pSurf->UnlockRect();
+			pSurf->Release();
 		}
 
 		mInputBuffers[i].pBuffer = nullptr;
-	}
-
-	if (mInputBuffers[i].surface)
-	{
-		clReleaseMemObject(mInputBuffers[i].surface);
-		mInputBuffers[i].surface = nullptr;
 	}
 
 	for (int k = 0; k < 2; k++)
@@ -419,7 +407,7 @@ bool VCEEncoder::Init()
 	if (mCanInterop)
 	{
 		res = mOCLDevice.Init(nullptr, mD3Ddevice, mDX11Device.GetDevice());
-		RETURNIFFAILED(res, TEXT("OpenCL device init failed. %d"), res);
+		RETURNIFFAILED(res, TEXT("OpenCL device init failed: %s"), amf::AMFGetResultText(res));
 
 		mCmdQueue = mOCLDevice.GetCommandQueue();
 		status = clGetCommandQueueInfo(mCmdQueue, CL_QUEUE_CONTEXT,
@@ -428,7 +416,7 @@ bool VCEEncoder::Init()
 			VCELog(TEXT("Failed to get CL context from command queue."));
 
 		res = mContext->InitOpenCL(mOCLDevice.GetCommandQueue());
-		RETURNIFFAILED(res, TEXT("AMF context init with OpenCL failed. %d\n"), res);
+		RETURNIFFAILED(res, TEXT("AMF context init with OpenCL failed: %s\n"), amf::AMFGetResultText(res));
 	}
 
 	/*************************************************
@@ -892,9 +880,6 @@ bool VCEEncoder::Encode(LPVOID picIn, List<DataPacket> &packets, List<PacketType
 	_InterlockedCompareExchange(&(inBuf.locked), 1, 0);
 	//TODO what about outputTimestamp
 	inBuf.timestamp = data.TimeStamp;
-	inBuf.outputTimestamp = data.TimeStamp - mPrevTS;
-	mPrevTS = data.TimeStamp;
-	//mTSqueue.push(data.TimeStamp);
 
 	OSEnterMutex(mSubmitMutex);
 	mSubmitQueue.push(idx);
@@ -1023,7 +1008,8 @@ AMF_RESULT VCEEncoder::SubmitBuffer(int idx)
 	case amf::AMF_MEMORY_DX11:
 	{
 		profileIn("CopyResource (dx11)")
-		res = mContext->CreateSurfaceFromDX11Native(inBuf.pTex, &pSurface, &mObserver);
+		ID3D11Texture2D* pTex = static_cast<ID3D11Texture2D*>(inBuf.pBuffer);
+		res = mContext->CreateSurfaceFromDX11Native(pTex, &pSurface, &mObserver);
 		if(res != AMF_OK)
 			VCELog(TEXT("Failed to create surface from DX11 texture: %s"), amf::AMFGetResultText(res));
 		profileOut
@@ -1119,9 +1105,9 @@ void VCEEncoder::ProcessBitstream(amf::AMFBufferPtr &buff)
 {
 	profileIn("ProcessBitstream")
 
-	int frameType = 0;
-	buff->GetProperty(L"OutputDataType", &frameType);
-	static TCHAR *frameTypes[] = { TEXT("IDR"), TEXT("I"), TEXT("P"), TEXT("B") };
+	//int frameType = 0;
+	//buff->GetProperty(L"OutputDataType", &frameType);
+	//static TCHAR *frameTypes[] = { TEXT("IDR"), TEXT("I"), TEXT("P"), TEXT("B") };
 
 	OutputList *bufferedOut = nullptr;
 
@@ -1171,7 +1157,7 @@ void VCEEncoder::ProcessBitstream(amf::AMFBufferPtr &buff)
 
 	PacketType bestType = PacketType_VideoDisposable;
 	bool bFoundFrame = false;
-	bufferedOut->pBuffer.SetSize(0);
+	bufferedOut->pBuffer.Clear();
 
 	for (unsigned int i = 0; i < nalNum; i++)
 	{
@@ -1460,7 +1446,6 @@ bool VCEEncoder::RequestBuffersHost(LPVOID buffers)
 				return false;
 			}*/
 			inBuf.pBuffer = new uint8_t[mInBuffSize];
-			inBuf.size = mInBuffSize;
 		}
 
 		inBuf.mem_type = amf::AMF_MEMORY_HOST;
@@ -1527,14 +1512,15 @@ bool VCEEncoder::RequestBuffersDX11(LPVOID buffers)
 			return false;
 		}
 
-		if (!inBuf.pTex)
+		if (!inBuf.pBuffer)
 		{
-			hres = mDX11Device.GetDevice()->CreateTexture2D(&desc, 0, &inBuf.pTex);
+			hres = mDX11Device.GetDevice()->CreateTexture2D(&desc, 0, (ID3D11Texture2D**)&inBuf.pBuffer);
 			HRETURNIFFAILED(hres, "Failed to create D3D11 texture.");
 		}
 
 		D3D11_MAPPED_SUBRESOURCE map;
-		hres = d3dcontext->Map(inBuf.pTex, 0, D3D11_MAP::D3D11_MAP_WRITE/*_DISCARD*/, 0, &map);
+		hres = d3dcontext->Map(static_cast<ID3D11Texture2D*>(inBuf.pBuffer), 0, 
+					D3D11_MAP::D3D11_MAP_WRITE/*_DISCARD*/, 0, &map);
 		if (hres == E_OUTOFMEMORY)
 			CrashError(TEXT("Failed to map D3D11 texture: Out of memory."));
 		HRETURNIFFAILED(hres, "Failed to map D3D11 texture.");
@@ -1579,7 +1565,7 @@ bool VCEEncoder::RequestBuffersDX9(LPVOID buffers)
 
 		// WTF surface is AMF using. mfxFrameData get overwritten (aka WTF is UV supposed to go?)
 		// Looking at Wine source, DX9 creates surface from 2 textures: D3DFMT_L8, D3DFMT_A8L8?
-		if (!inBuf.pSurface9)
+		if (!inBuf.pBuffer)
 		{
 			//hr = mDX9Device.GetDevice()->CreateOffscreenPlainSurface(
 			//	mWidth, mHeight, (D3DFORMAT)MAKEFOURCC('N', 'V', '1', '2'),
@@ -1600,9 +1586,10 @@ bool VCEEncoder::RequestBuffersDX9(LPVOID buffers)
 			}
 		}
 
+		IDirect3DSurface9* pSurf = static_cast<IDirect3DSurface9*>(inBuf.pBuffer);
 		D3DLOCKED_RECT rect;
-		inBuf.pSurface9->UnlockRect();
-		hr = inBuf.pSurface9->LockRect(&rect, nullptr, D3DLOCK_DISCARD /* 0 */);
+		pSurf->UnlockRect();
+		hr = pSurf->LockRect(&rect, nullptr, D3DLOCK_DISCARD /* 0 */);
 		if (FAILED(hr))
 		{
 			VCELog(TEXT("Failed to lock D3D9 surface: %08X"), hr);
