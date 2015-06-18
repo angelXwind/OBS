@@ -425,7 +425,7 @@ bool VCEEncoder::Init()
 	*
 	**************************************************/
 	res = pAMFCreateComponent(mContext, AMFVideoEncoderVCE_AVC, &mEncoder);
-	RETURNIFFAILED(res, TEXT("AMFCreateComponent(encoder) failed. %d"), res);
+	RETURNIFFAILED(res, TEXT("AMFCreateComponent(encoder) failed. %s"), amf::AMFGetResultText(res));
 
 	//------------------------
 	// Print few caps etc.
@@ -544,7 +544,7 @@ bool VCEEncoder::Init()
 
 	//-----------------------
 	res = mEncoder->Init(amf::AMF_SURFACE_NV12, mWidth, mHeight);
-	RETURNIFFAILED(res, TEXT("Encoder init failed. %d"), res);
+	RETURNIFFAILED(res, TEXT("Encoder init failed with: \"%s\". See if lowering video resolution/fps helps."), amf::AMFGetResultText(res));
 
 	int gopSize = mFps * (mKeyint == 0 ? 2 : mKeyint);
 	//gopSize -= gopSize % 6;
