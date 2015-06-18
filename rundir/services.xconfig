@@ -20,6 +20,8 @@ services : {
       "US East: Miami, FL"                   : rtmp://live-mia.twitch.tv/app
       "US East: New York, NY"                : rtmp://live-jfk.twitch.tv/app
       "US West: Los Angeles, CA"             : rtmp://live-lax.twitch.tv/app
+      "US West: San Jose, CA"                : rtmp://live-sjc.twitch.tv/app
+      "US West: Seattle, WA"                 : rtmp://live-sea.twitch.tv/app
     }
     recommended : {
       "keyint" : 2000
@@ -64,7 +66,7 @@ services : {
       "Backup Youtube ingest server" : rtmp://b.rtmp.youtube.com/live2?backup=1
     }
     recommended : {
-      "keyint"      : 2000
+      "keyint"      : 4000
     }
   }
   CyberGame.TV : {
@@ -79,7 +81,7 @@ services : {
     id : 11
     servers : {
       "Default"                           : rtmp://live.hitbox.tv/push
-      "Asia: Singapore"                   : rtmp://live.lax.hitbox.tv/push
+      "Asia: Singapore"                   : rtmp://live.sin.hitbox.tv/push
       "China: Hong Kong"                  : rtmp://live.hkg.hitbox.tv/push
       "EU-Central: Nurnberg, Germany"     : rtmp://live.nbg.hitbox.tv/push
       "EU-North: London, United Kingdom"  : rtmp://live.lhr.hitbox.tv/push
