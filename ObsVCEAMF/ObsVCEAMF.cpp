@@ -480,8 +480,6 @@ bool VCEEncoder::Init()
 		iocaps->GetHeightRange(&imin, &imax);
 		VCELog(TEXT("  Height min/max: %d/%d"), imin, imax);
 	}
-
-	PrintProps(mEncoder);
 #pragma endregion
 
 	// USAGE is a "preset" property so set before anything else
@@ -728,6 +726,7 @@ bool VCEEncoder::Init()
 		return false;
 	}
 
+	PrintProps(mEncoder);
 	mReqKeyframe = true;
 	mAlive = true;
 	return true;
