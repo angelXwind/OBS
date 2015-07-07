@@ -139,6 +139,7 @@ void waitForEvent(cl_event inMapEvt)
 #endif
 }
 
+#if 0
 void mapBuffer(cl_command_queue cmdqueue, InputBuffer &buffer, uint32_t size)
 {
 	cl_event inMapEvt = 0;
@@ -226,3 +227,4 @@ void unmapImage(cl_command_queue cmdqueue, InputBuffer &buffer, uint32_t idx)
 	//buffer.isMapped = false;
 	buffer.yuv_host_ptr[idx] = nullptr;
 }
+#endif
