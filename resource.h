@@ -158,8 +158,9 @@
 #define IDC_PLUGINS                     1055
 #define IDC_VCE_FRAMESKIP               1055
 #define IDC_MOVEUP                      1056
+#define IDC_MOVEUP                      1056
 #define IDC_REPLACE                     1056
-#define IDC_ADD2                        1056
+#define IDC_ADDFOLDER                   1211
 #define IDC_VCE_FRAMESKIP2              1056
 #define IDC_VCE_DFILLER                 1056
 #define IDC_MOVEDOWN                    1057
@@ -515,7 +516,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        152
 #define _APS_NEXT_COMMAND_VALUE         40088
-#define _APS_NEXT_CONTROL_VALUE         1211
+#define _APS_NEXT_CONTROL_VALUE         1212
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
