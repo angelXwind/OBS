@@ -232,12 +232,15 @@ void SettingsVCE::ApplySettings()
     bBool = SendMessage(GetDlgItem(hwnd, IDC_VCE_DFILLER), BM_GETCHECK, 0, 0) == BST_CHECKED;
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("DiscardFiller"), bBool);
 
+    bBool = SendMessage(GetDlgItem(hwnd, IDC_VCE_VERBOSE), BM_GETCHECK, 0, 0) == BST_CHECKED;
+    AppConfig->SetInt(TEXT("VCE Settings"), TEXT("VerboseLog"), bBool);
+
     iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_GOP)).ToInt();
     iInt = checkRange(iInt, 0, 1000, 30);
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("GOPSize"), iInt);
 
     iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_IDR)).ToInt();
-    iInt = checkRange(iInt, 0, 1000, 60);
+    iInt = checkRange(iInt, 0, 1000, 120);
     AppConfig->SetInt(TEXT("VCE Settings"), TEXT("IDRPeriod"), iInt);
 
     iInt = GetEditText(GetDlgItem(hwnd, IDC_VCE_IPIC)).ToInt();
@@ -479,7 +482,7 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 		SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
 		const std::vector<SpinnerInts> spinners = {
-			{ TEXT("GOPSize"), IDC_VCE_GOP, IDC_VCE_SPIN_GOP, 20, 0, 1000 }, //1000 to keep in range for header insertion
+			{ TEXT("GOPSize"), IDC_VCE_GOP, IDC_VCE_SPIN_GOP, 30, 0, 1000 }, //1000 to keep in range for header insertion
 			{ TEXT("IDRPeriod"), IDC_VCE_IDR, IDC_VCE_SPIN_IDR, 120, 0, 1000 },
 			{ TEXT("BFrames"), IDC_VCE_BFRAMES, IDC_VCE_SPIN4, 0, 0, 16 }, //TODO Maximum B-frames
 			{ TEXT("DevIndex"), IDC_VCE_DEVIDX, IDC_VCE_DEVSPIN, 0, 0, 255 },
@@ -546,6 +549,9 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
         iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("DiscardFiller"), 0);
         SendMessage(GetDlgItem(hwnd, IDC_VCE_DFILLER), BM_SETCHECK, iInt, 0);
+
+        iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("VerboseLog"), 0);
+        SendMessage(GetDlgItem(hwnd, IDC_VCE_VERBOSE), BM_SETCHECK, iInt, 0);
 
         iInt = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("NoInterop"), 0);
         SendMessage(GetDlgItem(hwnd, IDC_VCE_INTEROP), BM_SETCHECK, iInt, 0);
@@ -614,6 +620,7 @@ INT_PTR SettingsVCE::ProcMessage(UINT message, WPARAM wParam, LPARAM lParam)
         case IDC_VCE_RC_FQP:
         case IDC_VCE_RC_LCVBR:
         case IDC_VCE_DFILLER:
+        case IDC_VCE_VERBOSE:
             if (HIWORD(wParam) == BN_CLICKED)
             {
                 bDataChanged = true;

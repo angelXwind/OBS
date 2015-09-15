@@ -158,15 +158,15 @@
 #define IDC_PLUGINS                     1055
 #define IDC_VCE_FRAMESKIP               1055
 #define IDC_MOVEUP                      1056
-#define IDC_MOVEUP                      1056
 #define IDC_REPLACE                     1056
-#define IDC_ADDFOLDER                   1211
 #define IDC_VCE_FRAMESKIP2              1056
 #define IDC_VCE_DFILLER                 1056
 #define IDC_MOVEDOWN                    1057
 #define IDC_DESCRIPTION                 1057
 #define IDC_MOVEUPWARD                  1057
 #define IDC_REMOVE2                     1057
+#define IDC_VCE_INTEROP2                1057
+#define IDC_VCE_VERBOSE                 1057
 #define IDC_MOVETOTOP                   1058
 #define IDC_MOVEDOWNWARD                1058
 #define IDC_MOVETOBOTTOM                1059
@@ -439,6 +439,7 @@
 #define IDC_IMPORT                      1210
 #define IDC_TSRCOPACITY                 1210
 #define IDC_VCE_RC_VBR                  1210
+#define IDC_ADDFOLDER                   1211
 #define IDC_VCE_RC_FQP                  1211
 #define IDC_VCE_RC_LCVBR                1212
 #define IDA_SOURCE_MOVEUP               40018
