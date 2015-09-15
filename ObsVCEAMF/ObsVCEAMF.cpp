@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include <../libmfx/include/msdk/include/mfxstructures.h>
 
-#undef profileIn
-#define profileIn(x) {
+//#undef profileIn
+//#define profileIn(x) {
 
 //#pragma comment(lib, "dxva2")
 #ifndef AMF_CORE_STATIC
@@ -35,6 +35,21 @@ ConfigFile **VCEAppConfig = 0;
 unsigned int encoderRefs = 0;
 bool loggedSupport = false;
 const TCHAR* STR_FAILED_TO_SET_PROPERTY = TEXT("Failed to set '%s' property.");
+const wchar_t* DEFAULT_PROPERTIES[] = {
+	AMF_VIDEO_ENCODER_FRAMERATE,
+	AMF_VIDEO_ENCODER_GOP_SIZE,
+	AMF_VIDEO_ENCODER_IDR_PERIOD,
+	AMF_VIDEO_ENCODER_PEAK_BITRATE,
+	AMF_VIDEO_ENCODER_TARGET_BITRATE,
+	AMF_VIDEO_ENCODER_VBV_BUFFER_SIZE,
+	AMF_VIDEO_ENCODER_QUALITY_PRESET,
+	AMF_VIDEO_ENCODER_PROFILE,
+	AMF_VIDEO_ENCODER_PROFILE_LEVEL,
+	AMF_VIDEO_ENCODER_MIN_QP,
+	AMF_VIDEO_ENCODER_MAX_QP,
+	AMF_VIDEO_ENCODER_B_PIC_PATTERN,
+	L"CABACEnable",
+};
 
 extern "C" __declspec(dllexport) bool __cdecl InitVCEEncoder(ConfigFile **appConfig, VideoEncoder *enc)
 {
@@ -128,53 +143,61 @@ static void NV12PicCopy(const amf_uint8 *src, amf_int32 srcStride, amf_int32 src
 	PlaneCopy(src + srcYSize, srcStride, srcHeight / 2, dst + dstYSize, dstStride, dstHeight / 2);
 }
 
-void PrintProps(amf::AMFPropertyStorage *props)
+void PrintProps(amf::AMFPropertyStorage *props, bool verboseLog = false)
 {
 
 	amf::AMFBuffer* buffer = nullptr;
-	amf_size count = props->GetPropertyCount();
-	for (amf_int32 i = 0; i < count; i++)
+	amf_size count = verboseLog ? props->GetPropertyCount() : ARRAYSIZE(DEFAULT_PROPERTIES);
+	for (amf_size i = 0; i < count; i++)
 	{
 		wchar_t name[4096];
 		amf::AMFVariant var;
-		if (AMF_OK == props->GetPropertyAt(i, name, 4096, &var))
+		if (!verboseLog)
 		{
-			switch (var.type)
+			wcscpy_s(name, DEFAULT_PROPERTIES[i]);
+			if (AMF_OK != props->GetProperty(name, &var))
 			{
-			case amf::AMF_VARIANT_TYPE::AMF_VARIANT_EMPTY:
-				VCELog(TEXT("%s = <empty>"), name);
-				break;
-			case amf::AMF_VARIANT_TYPE::AMF_VARIANT_BOOL:
-				VCELog(TEXT("%s = <bool>%d"), name, var.boolValue);
-				break;
-			case amf::AMF_VARIANT_TYPE::AMF_VARIANT_INT64:
-				VCELog(TEXT("%s = %lld"), name, var.int64Value);
-				break;
-			case amf::AMF_VARIANT_TYPE::AMF_VARIANT_STRING:
-				VCELog(TEXT("%s = <str>%s"), name, var.stringValue);
-				break;
-			case amf::AMF_VARIANT_TYPE::AMF_VARIANT_WSTRING:
-				VCELog(TEXT("%s = <wstr>%s"), name, var.wstringValue);
-				break;
-			case amf::AMF_VARIANT_TYPE::AMF_VARIANT_SIZE:
-				VCELog(TEXT("%s = <size>%dx%d"), name, var.sizeValue.width, var.sizeValue.height);
-				break;
-			case amf::AMF_VARIANT_TYPE::AMF_VARIANT_RATE:
-				VCELog(TEXT("%s = <rate>%d/%d"), name, var.rateValue.num, var.rateValue.den);
-				break;
-			case amf::AMF_VARIANT_TYPE::AMF_VARIANT_RATIO:
-				VCELog(TEXT("%s = <ratio>%d/%d"), name, var.ratioValue.num, var.ratioValue.den);
-				break;
-			case amf::AMF_VARIANT_TYPE::AMF_VARIANT_INTERFACE:
-				VCELog(TEXT("%s = <interface>"), name);
-				break;
-			default:
-				VCELog(TEXT("%s = <type %d>"), name, var.type);
+				VCELog(TEXT("Failed to get property \"%s\""), name);
+				continue;
 			}
 		}
-		else
+		else if (AMF_OK != props->GetPropertyAt(i, name, 4096, &var))
 		{
 			VCELog(TEXT("Failed to get property at index %d"), i);
+			continue;
+		}
+
+		switch (var.type)
+		{
+		case amf::AMF_VARIANT_TYPE::AMF_VARIANT_EMPTY:
+			VCELog(TEXT("%s = <empty>"), name);
+			break;
+		case amf::AMF_VARIANT_TYPE::AMF_VARIANT_BOOL:
+			VCELog(TEXT("%s = <bool>%d"), name, var.boolValue);
+			break;
+		case amf::AMF_VARIANT_TYPE::AMF_VARIANT_INT64:
+			VCELog(TEXT("%s = %lld"), name, var.int64Value);
+			break;
+		case amf::AMF_VARIANT_TYPE::AMF_VARIANT_STRING:
+			VCELog(TEXT("%s = <str>%s"), name, var.stringValue);
+			break;
+		case amf::AMF_VARIANT_TYPE::AMF_VARIANT_WSTRING:
+			VCELog(TEXT("%s = <wstr>%s"), name, var.wstringValue);
+			break;
+		case amf::AMF_VARIANT_TYPE::AMF_VARIANT_SIZE:
+			VCELog(TEXT("%s = <size>%dx%d"), name, var.sizeValue.width, var.sizeValue.height);
+			break;
+		case amf::AMF_VARIANT_TYPE::AMF_VARIANT_RATE:
+			VCELog(TEXT("%s = <rate>%d/%d"), name, var.rateValue.num, var.rateValue.den);
+			break;
+		case amf::AMF_VARIANT_TYPE::AMF_VARIANT_RATIO:
+			VCELog(TEXT("%s = <ratio>%d/%d"), name, var.ratioValue.num, var.ratioValue.den);
+			break;
+		case amf::AMF_VARIANT_TYPE::AMF_VARIANT_INTERFACE:
+			VCELog(TEXT("%s = <interface>"), name);
+			break;
+		default:
+			VCELog(TEXT("%s = <type %d>"), name, var.type);
 		}
 	}
 }
@@ -363,6 +386,7 @@ bool VCEEncoder::Init()
 
 	bool userCfg = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("UseCustom"), 0) != 0;
 	int adapterId = AppConfig->GetInt(TEXT("Video"), TEXT("Adapter"), 0);
+	bool verboseLog = AppConfig->GetInt(TEXT("VCE Settings"), TEXT("VerboseLog"), 0) != 0;
 	int customAdapterId = -1;
 	USERCFG(customAdapterId, "AdapterID");
 	if (customAdapterId != -1)
@@ -377,7 +401,9 @@ bool VCEEncoder::Init()
 	mEngine = (uint32_t)AppConfig->GetInt(TEXT("VCE Settings"), TEXT("AMFEngine"), 2);
 	if (mEngine > 2) mEngine = 2;
 
-	if (mEngine == 2)
+	// AMF uses Dx11 device either way, pass it our own
+	//if (mEngine == 2)
+	if (mEngine != 1)
 	{
 		res = mDX11Device.Init(adapterId, false);
 		RETURNIFFAILED(res, TEXT("D3D11 device init failed. %d\n"), res);
@@ -385,7 +411,8 @@ bool VCEEncoder::Init()
 		res = mContext->InitDX11(mDX11Device.GetDevice(), amf::AMF_DX11_0);
 		RETURNIFFAILED(res, TEXT("AMF context init with D3D11 failed. %s\n"), amf::AMFGetResultText(res));
 		mCanInterop = true;
-		if (AppConfig->GetInt(TEXT("VCE Settings"), TEXT("NoInterop"), 0) != 0)
+		if (AppConfig->GetInt(TEXT("VCE Settings"), TEXT("NoInterop"), 0) != 0 
+				|| mEngine != 2)
 			mCanInterop = false;
 	}
 	else if (mEngine == 1)
@@ -405,7 +432,7 @@ bool VCEEncoder::Init()
 	//Only with DX11
 	if (mCanInterop)
 	{
-		res = mOCLDevice.Init(nullptr, mD3Ddevice, mDX11Device.GetDevice());
+		res = mOCLDevice.Init(nullptr, mD3Ddevice, mDX11Device.GetDevice(), verboseLog);
 		RETURNIFFAILED(res, TEXT("OpenCL device init failed: %s"), amf::AMFGetResultText(res));
 
 		mCmdQueue = mOCLDevice.GetCommandQueue();
@@ -726,7 +753,7 @@ bool VCEEncoder::Init()
 		return false;
 	}
 
-	PrintProps(mEncoder);
+	PrintProps(mEncoder, verboseLog);
 	mReqKeyframe = true;
 	mAlive = true;
 	return true;
@@ -935,7 +962,7 @@ void VCEEncoder::OutputPoll()
 			ProcessBitstream(buffer);
 			profileOut
 		}
-		OSSleep(5);
+		OSSleep(3);
 	}
 }
 
@@ -1000,16 +1027,43 @@ AMF_RESULT VCEEncoder::SubmitBuffer(int idx)
 	amf::AMFSurfacePtr pSurface;
 	amf::AMFDataPtr amfdata;
 	amf::AMFPlanePtr plane;
+	HRESULT hres = 0;
 
 	switch (inBuf.mem_type)
 	{
 	case amf::AMF_MEMORY_DX11:
 	{
 		profileIn("CopyResource (dx11)")
+		ID3D11DeviceContext *d3dcontext = nullptr;
+
+		mDX11Device.GetDevice()->GetImmediateContext(&d3dcontext);
+		if (!d3dcontext)
+		{
+			VCELog(TEXT("Failed to get immediate D3D11 context."));
+			return AMF_FAIL;
+		}
+
 		ID3D11Texture2D* pTex = static_cast<ID3D11Texture2D*>(inBuf.pBuffer);
+		d3dcontext->Unmap(pTex, 0);
+
 		res = mContext->CreateSurfaceFromDX11Native(pTex, &pSurface, &mObserver);
+
+		D3D11_MAPPED_SUBRESOURCE map;
+		hres = d3dcontext->Map(pTex, 0, D3D11_MAP::D3D11_MAP_WRITE, 0, &map);
+		if (hres == E_OUTOFMEMORY)
+			CrashError(TEXT("Failed to map D3D11 texture: Out of memory."));
+
+		if (FAILED(hres))
+			VCELog(TEXT("Failed to map D3D11 texture."));
+
+		inBuf.frameData->Pitch = map.RowPitch;
+		inBuf.frameData->Y = (mfxU8*)map.pData;
+		inBuf.frameData->UV = inBuf.frameData->Y + (mHeight * map.RowPitch);
+
 		if(res != AMF_OK)
 			VCELog(TEXT("Failed to create surface from DX11 texture: %s"), amf::AMFGetResultText(res));
+
+		d3dcontext->Release();
 		profileOut
 	}
 		break;
@@ -1072,6 +1126,7 @@ AMF_RESULT VCEEncoder::SubmitBuffer(int idx)
 	//pSurface->SetProperty(L"OUTPUTTS", inBuf->outputTimestamp);
 	//mTSqueue.push(data.TimeStamp);
 
+	// XXX Prepare for unexplained slowness
 	inRes = mEncoder->SubmitInput(pSurface);
 
 #ifdef _DEBUG
@@ -1523,6 +1578,7 @@ bool VCEEncoder::RequestBuffersDX11(LPVOID buffers)
 		HRETURNIFFAILED(hres, "Failed to map D3D11 texture.");
 
 		inBuf.mem_type = amf::AMF_MEMORY_DX11;
+		inBuf.frameData = buff;
 		buff->Pitch = map.RowPitch;
 		buff->Y = (mfxU8*)map.pData;
 		buff->UV = buff->Y + (mHeight * buff->Pitch);

@@ -16,7 +16,7 @@ public:
     DeviceOpenCL();
     virtual ~DeviceOpenCL();
     
-	AMF_RESULT Init(IDirect3DDevice9* pD3DDevice9, ID3D10Device *pD3DDevice10, ID3D11Device* pD3DDevice11/*, HGLRC hContextOGL, HDC hDC*/);
+	AMF_RESULT Init(IDirect3DDevice9* pD3DDevice9, ID3D10Device *pD3DDevice10, ID3D11Device* pD3DDevice11/*, HGLRC hContextOGL, HDC hDC*/, bool verbose = false);
     AMF_RESULT Terminate();
 
     cl_command_queue            GetCommandQueue() { return m_hCommandQueue; }

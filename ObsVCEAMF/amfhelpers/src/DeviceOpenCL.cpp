@@ -55,7 +55,7 @@ DeviceOpenCL::~DeviceOpenCL()
 	Terminate();
 }
 
-AMF_RESULT DeviceOpenCL::Init(IDirect3DDevice9* pD3DDevice9, ID3D10Device *pD3DDevice10,ID3D11Device* pD3DDevice11/*, HGLRC hContextOGL, HDC hDC*/)
+AMF_RESULT DeviceOpenCL::Init(IDirect3DDevice9* pD3DDevice9, ID3D10Device *pD3DDevice10,ID3D11Device* pD3DDevice11/*, HGLRC hContextOGL, HDC hDC*/, bool verbose)
 {
 	AMF_RESULT res = AMF_OK;
 	cl_int status = 0;
@@ -69,7 +69,7 @@ AMF_RESULT DeviceOpenCL::Init(IDirect3DDevice9* pD3DDevice9, ID3D10Device *pD3DD
 	CHECK_AMF_ERROR_RETURN(res, L"FindPlatformID() failed");
 
 	status = clGetPlatformInfo(platformID, CL_PLATFORM_EXTENSIONS, 0, nullptr, &extSize);
-	if (!status)
+	if (!status && verbose)
 	{
 		exts = new char[extSize];
 		status = clGetPlatformInfo(platformID, CL_PLATFORM_EXTENSIONS, extSize, exts, nullptr);
@@ -127,7 +127,7 @@ AMF_RESULT DeviceOpenCL::Init(IDirect3DDevice9* pD3DDevice9, ID3D10Device *pD3DD
 		cps.push_back((cl_context_properties)pD3DDevice10);
 
 		status = clGetDeviceInfo(deviceDX10, CL_DEVICE_EXTENSIONS, 0, nullptr, &extSize);
-		if (!status)
+		if (!status && verbose)
 		{
 			exts = new char[extSize];
 			status = clGetDeviceInfo(deviceDX10, CL_DEVICE_EXTENSIONS, extSize, exts, nullptr);
