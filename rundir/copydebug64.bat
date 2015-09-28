@@ -1,5 +1,10 @@
 @echo off
 copy ..\x64\debug\obs.exe .\
+copy ..\ObsVCE\x64\debug\ObsVCE.dll .\
+copy ..\ObsVCEAMF\x64\debug\ObsVCEAMF.dll .\
+copy ..\x64\debug\ObsVCEMFT.dll .\
+copy "%UserProfile%\AMD Media SDK\1.1\dll\amf\x86_64\debug\vs12\amf-core-windesktop64.dll" .\
+copy "%UserProfile%\AMD Media SDK\1.1\dll\amf\x86_64\debug\vs12\amf-component-vce-windesktop64.dll" .\
 copy ..\obsapi\x64\debug\obsapi.dll .\
 copy ..\dshowplugin\x64\debug\dshowplugin.dll .\plugins
 copy ..\graphicscapture\x64\debug\graphicscapture.dll .\plugins
