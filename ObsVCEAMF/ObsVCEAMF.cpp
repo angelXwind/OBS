@@ -498,7 +498,7 @@ bool VCEEncoder::Init()
 			bool native;
 			amf::AMF_MEMORY_TYPE memType;
 			iocaps->GetMemoryTypeAt(i, &memType, &native);
-			VCELog(TEXT("    %s, native: %d"), amf::AMFGetMemoryTypeName(memType), native);
+			VCELog(TEXT("    %s, native: %s"), amf::AMFGetMemoryTypeName(memType), native ? TEXT("Yes") : TEXT("No"));
 		}
 
 		amf_int32 imin, imax;
