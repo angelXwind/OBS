@@ -2,7 +2,7 @@
 
 ; Define your application name
 !define APPNAME "Open Broadcaster Software"
-!define APPNAMEANDVERSION "Open Broadcaster Software 0.656b"
+!define APPNAMEANDVERSION "Open Broadcaster Software 0.657b"
 
 ; Additional script dependencies
 !include WinVer.nsh
@@ -269,7 +269,7 @@ Section "un.OBS Program Files"
 
 	; Clean up Open Broadcaster Software
 	Delete "$PROGRAMFILES32\OBS\OBS.exe"
-	Delete "$PROGRAMFILES32\LICENSE"
+	Delete "$PROGRAMFILES32\OBS\LICENSE"
 	Delete "$PROGRAMFILES32\OBS\libx264-146.dll"
 	Delete "$PROGRAMFILES32\OBS\QSVHelper.exe"
 	Delete "$PROGRAMFILES32\OBS\OBSApi.dll"
@@ -292,7 +292,7 @@ Section "un.OBS Program Files"
 	Delete "$PROGRAMFILES32\OBS\plugins\GraphicsCapture\*.exe"
 	${if} ${RunningX64}
 		Delete "$PROGRAMFILES64\OBS\OBS.exe"
-		Delete "$PROGRAMFILES64\LICENSE"
+		Delete "$PROGRAMFILES64\OBS\LICENSE"
 		Delete "$PROGRAMFILES64\OBS\libx264-146.dll"
 		Delete "$PROGRAMFILES64\OBS\QSVHelper.exe"
 		Delete "$PROGRAMFILES64\OBS\OBSApi.dll"
