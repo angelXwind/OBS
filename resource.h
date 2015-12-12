@@ -438,6 +438,7 @@
 #define IDC_VCE_RC_CBR                  1209
 #define IDC_IMPORT                      1210
 #define IDC_TSRCOPACITY                 1210
+#define IDC_NVENC2PASS                  1211
 #define IDC_VCE_RC_VBR                  1210
 #define IDC_ADDFOLDER                   1211
 #define IDC_VCE_RC_FQP                  1211
