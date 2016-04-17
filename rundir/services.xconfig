@@ -4,12 +4,9 @@ services : {
     servers : {
       "US West: San Francisco, CA"             : rtmp://live.twitch.tv/app
       "Asia: Hong Kong"                        : rtmp://live-hkg.twitch.tv/app
-      "Asia: Hong Kong (2)"                    : rtmp://live-hkg-2.twitch.tv/app
       "Asia: Seoul, South Korea"               : rtmp://live-sel.twitch.tv/app
-      "Asia: Seoul, South Korea (2)"           : rtmp://live-sel-2.twitch.tv/app
       "Asia: Singapore"                        : rtmp://live-sin.twitch.tv/app
       "Asia: Taipei, Taiwan"                   : rtmp://live-tpe.twitch.tv/app
-      "Asia: Tokyo (2), Japan"                 : rtmp://live-tyo-2.twitch.tv/app
       "Asia: Tokyo, Japan"                     : rtmp://live-tyo.twitch.tv/app
       "Australia: Sydney"                      : rtmp://live-syd.twitch.tv/app
       "EU: Amsterdam, NL"                      : rtmp://live-ams.twitch.tv/app
@@ -18,6 +15,7 @@ services : {
       "EU: Paris, FR"                          : rtmp://live-cdg.twitch.tv/app
       "EU: Prague, CZ"                         : rtmp://live-prg.twitch.tv/app
       "EU: Stockholm, SE"                      : rtmp://live-arn.twitch.tv/app
+      "EU: Warsaw, PL"                         : rtmp://live-waw.twitch.tv/app
       "South America: Argentina"               : rtmp://live-eze.twitch.tv/app
       "South America: Chile"                   : rtmp://live-scl.twitch.tv/app
       "South America: Rio de Janeiro, Brazil"  : rtmp://live-gig.twitch.tv/app

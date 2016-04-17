@@ -1333,6 +1333,7 @@ public:
     void AddPendingStream(ClosableStream *stream, std::function<void()> finishedCallback = {});
     void AddPendingStreamThread(HANDLE thread);
     void ClosePendingStreams();
+    void LoadAllPlugins();
 };
 
 LONG CALLBACK OBSExceptionHandler (PEXCEPTION_POINTERS exceptionInfo);
