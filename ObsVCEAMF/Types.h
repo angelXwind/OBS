@@ -48,9 +48,19 @@ public:
 	*/
 	virtual void AMF_STD_CALL OnSurfaceDataRelease(amf::AMFSurface* pSurface)
 	{
-		InputBuffer *inBuf = nullptr;
-		if(pSurface->GetProperty(L"InputBuffer", (amf_int64*)&inBuf) == AMF_OK)
+#if _M_X64
+		amf_int64 in = 0;
+		AMF_RESULT res = pSurface->GetProperty(L"InputBuffer", &in);
+#else
+		amf_int32 in = 0;
+		AMF_RESULT res = pSurface->GetProperty(L"InputBuffer", &in);
+#endif
+
+		if (res == AMF_OK)
+		{
+			InputBuffer *inBuf = reinterpret_cast<InputBuffer *>(in);
 			_InterlockedCompareExchange(&(inBuf->locked), 0, 1);
+		}
 		else
 			OSDebugOut(TEXT("Failed to get buffer property\n"));
 		//OSDebugOut(TEXT("Release buffer %p\n"), inBuf);

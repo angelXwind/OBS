@@ -1094,7 +1094,12 @@ AMF_RESULT VCEEncoder::SubmitBuffer(int idx)
 	}
 
 	assert(pSurface);
+	//FIXME void* returns null pointer in Observer::OnSurfaceDataRelease
+#if _M_X64
 	pSurface->SetProperty(L"InputBuffer", (amf_int64)&inBuf);
+#else
+	pSurface->SetProperty(L"InputBuffer", (amf_int32)&inBuf);
+#endif
 
 	if (mReqKeyframe || (mLowLatencyKeyInt > 0 && mCurrFrame >= mLowLatencyKeyInt))
 	{
