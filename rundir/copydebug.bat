@@ -3,8 +3,8 @@ copy ..\debug\obs.exe .\
 copy ..\ObsVCE\debug\ObsVCE.dll .\
 copy ..\ObsVCEAMF\debug\ObsVCEAMF.dll .\
 copy ..\debug\ObsVCEMFT.dll .\
-copy "%UserProfile%\AMD Media SDK\1.1\dll\amf\x86\debug\vs12\amf-core-windesktop.dll" .\
-copy "%UserProfile%\AMD Media SDK\1.1\dll\amf\x86\debug\vs12\amf-component-vce-windesktop.dll" .\
+copy "%UserProfile%\AMD Media SDK\1.1\dll\amf\x86\debug\vs12\amf-core-windesktop32.dll" .\
+copy "%UserProfile%\AMD Media SDK\1.1\dll\amf\x86\debug\vs12\amf-component-vce-windesktop32.dll" .\
 copy ..\obsapi\debug\obsapi.dll .\
 copy ..\dshowplugin\debug\dshowplugin.dll .\plugins
 copy ..\graphicscapture\debug\graphicscapture.dll .\plugins
