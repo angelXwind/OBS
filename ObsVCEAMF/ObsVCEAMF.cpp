@@ -1163,9 +1163,9 @@ void VCEEncoder::ProcessBitstream(amf::AMFBufferPtr &buff)
 {
 	profileIn("ProcessBitstream")
 
-	//int frameType = 0;
-	//buff->GetProperty(L"OutputDataType", &frameType);
-	//static TCHAR *frameTypes[] = { TEXT("IDR"), TEXT("I"), TEXT("P"), TEXT("B") };
+	int frameType = 0;
+	buff->GetProperty(L"OutputDataType", &frameType);
+	static TCHAR *frameTypes[] = { TEXT("IDR"), TEXT("I"), TEXT("P"), TEXT("B") };
 
 	OutputList *bufferedOut = nullptr;
 
@@ -1320,6 +1320,7 @@ void VCEEncoder::ProcessBitstream(amf::AMFBufferPtr &buff)
 
 			int newPayloadSize = (nal.i_payload - skipBytes);
 			BufferOutputSerializer packetOut(bufferedOut->pBuffer);
+			OSDebugOut(TEXT("payload %S size: %d\n"), frameTypes[frameType], newPayloadSize);
 
 			packetOut.OutputDword(htonl(newPayloadSize));
 			packetOut.Serialize(nal.p_payload + skipBytes, newPayloadSize);
