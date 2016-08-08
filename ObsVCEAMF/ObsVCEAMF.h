@@ -156,7 +156,7 @@ private:
 	void ClearInputBuffer(int idx);
 	void OutputPoll();
 	void Submit();
-	AMF_RESULT SubmitBuffer(int);
+	AMF_RESULT SubmitBuffer(InputBuffer &inBuf);
 	static DWORD OutputPollThread(VCEEncoder*);
 	static DWORD SubmitThread(VCEEncoder* enc);
 
@@ -168,7 +168,6 @@ private:
 	ATL::CComPtr<ID3D10Device> mD3Ddevice;
 	//ATL::CComPtr<IDirectXVideoDecoderService> mDxvaService;
 	List<VideoPacket> mCurrPackets;
-	std::queue<uint64_t> mTSqueue;
 	std::queue<amf::AMFSurfacePtr> mSurfaces;
 	Observer mObserver;
 
@@ -218,14 +217,9 @@ private:
 
 	HANDLE                  mOutPollThread;
 	bool                    mClosing;
-	HANDLE                  mSubmitThread;
 	HANDLE                  mOutQueueMutex;
-	HANDLE                  mSubmitEvent;
-	HANDLE                  mSubmitMutex;
 	std::queue<OutputList*> mOutputQueue; //< Preallocated(-ish)
 	std::queue<OutputList*> mOutputProcessedQueue; //< NAL parsed
 	std::queue<OutputList*> mOutputReadyQueue; //< OBS has copied the buffer
 	InputBuffer             mInputBuffers[MAX_INPUT_BUFFERS];
-	std::queue<int> mSubmitQueue;
-	FILE*    mTmpFile;
 };

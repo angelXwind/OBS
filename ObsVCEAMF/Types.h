@@ -12,7 +12,7 @@ typedef struct InputBuffer
 	LONG locked; //< buffer is sent to encoder, no touching
 	LONG inUse; //< buffer was allocated and in use by OBS, but may touch, maybe
 	uint64_t timestamp;
-	mfxFrameData *frameData; //< For updating DX11 texture remapped pointers
+	ID3D11Texture2D* pTexD3D11;
 
 	uint8_t *yuv_host_ptr[2];
 	cl_mem yuv_surfaces[2];
