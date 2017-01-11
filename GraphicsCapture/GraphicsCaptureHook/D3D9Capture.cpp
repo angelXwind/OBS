@@ -111,15 +111,16 @@ struct PatchInfo {
 
 #ifdef _WIN64
 
-#define NUM_KNOWN_PATCHES 15
+#define NUM_KNOWN_PATCHES 16
 #define PATCH_COMPARE_SIZE 13
-UPARAM patch_offsets[NUM_KNOWN_PATCHES] = {/*0x4B55F,*/ 0x54FE6, 0x55095, 0x550C5, 0x6FE18, 0x70050, 0x703F8, 0x7E48C, 0x7E49C, 0x8BDB5, 0x8E635, 0x90352, 0x9038A, 0x93AFA, 0x93B8A, 0x1841E5 };
+UPARAM patch_offsets[NUM_KNOWN_PATCHES] = {/*0x4B55F,*/ 0x54FE6, 0x55095, 0x550C5, 0x6E2FC, 0x6FE18, 0x70050, 0x703F8, 0x7E48C, 0x7E49C, 0x8BDB5, 0x8E635, 0x90352, 0x9038A, 0x93AFA, 0x93B8A, 0x1841E5 };
 BYTE patch_compare[NUM_KNOWN_PATCHES][PATCH_COMPARE_SIZE] =
 {
     //{0x48, 0x8b, 0x81, 0xc8, 0x38, 0x00, 0x00, 0x39, 0x98, 0x68, 0x50, 0x00, 0x00},  //winvis - 6.0.6002.18005
     {0x48, 0x8b, 0x81, 0xb8, 0x3d, 0x00, 0x00, 0x39, 0x98, 0x68, 0x50, 0x00, 0x00},  //win7   - 6.1.7600.16385
     {0x48, 0x8b, 0x81, 0xb8, 0x3d, 0x00, 0x00, 0x39, 0x98, 0x68, 0x50, 0x00, 0x00},  //win7   - 6.1.7601.16562
     {0x48, 0x8b, 0x81, 0xb8, 0x3d, 0x00, 0x00, 0x39, 0x98, 0x68, 0x50, 0x00, 0x00},  //win7   - 6.1.7601.17514
+    {0x8b, 0x81, 0x18, 0x3e, 0x00, 0x00, 0x44, 0x39, 0x98, 0x90, 0x51, 0x00, 0x00},  //win10  - 10.0.14393.0
     {0x8b, 0x81, 0xb8, 0x3d, 0x00, 0x00, 0x44, 0x39, 0x98, 0x88, 0x51, 0x00, 0x00},  //win10  - 10.0.10240.16412
     {0x8b, 0x81, 0xb8, 0x3d, 0x00, 0x00, 0x44, 0x39, 0x98, 0x88, 0x51, 0x00, 0x00},  //win10  - 10.0.10240.16384
     {0x8b, 0x81, 0xb8, 0x3d, 0x00, 0x00, 0x44, 0x39, 0x98, 0x88, 0x51, 0x00, 0x00},  //win10  - 10.0.10162.0
@@ -148,6 +149,7 @@ PatchInfo patch[NUM_KNOWN_PATCHES] =
     NewPatch(forceJump),
     NewPatch(forceJump),
     NewPatch(forceJump),
+    NewPatch(forceJump),
     NewPatch(ignoreJump),
     NewPatch(ignoreJump),
     NewPatch(ignoreJump),
@@ -159,9 +161,9 @@ PatchInfo patch[NUM_KNOWN_PATCHES] =
 
 #else
 
-#define NUM_KNOWN_PATCHES 15
+#define NUM_KNOWN_PATCHES 16
 #define PATCH_COMPARE_SIZE 12
-UPARAM patch_offsets[NUM_KNOWN_PATCHES] = {/*0x4BDA1,*/ 0x79AA6, 0x79C9E, 0x79D96, 0x7F9BD, 0x8A3F4, 0x8B15F, 0x8B19F, 0x8B83F, 0x8E9F7, 0x8F00F, 0x8FBB1, 0x90264, 0x90C57, 0x90C3A, 0x166A08 };
+UPARAM patch_offsets[NUM_KNOWN_PATCHES] = {/*0x4BDA1,*/ 0x79AA6, 0x79C9E, 0x79D96, 0x7F9BD, 0x8A3F4, 0x8B15F, 0x8B19F, 0x8B83F, 0x8E9F7, 0x8F00F, 0x8FBB1, 0x90264, 0x90C57, 0x90C3A, 0x96673, 0x166A08 };
 BYTE patch_compare[NUM_KNOWN_PATCHES][PATCH_COMPARE_SIZE] =
 {
     //{0x8b, 0x89, 0x6c, 0x27, 0x00, 0x00, 0x39, 0xb9, 0x80, 0x4b, 0x00, 0x00},  //winvis - 6.0.6002.18005
@@ -179,6 +181,7 @@ BYTE patch_compare[NUM_KNOWN_PATCHES][PATCH_COMPARE_SIZE] =
     {0x87, 0xe8, 0x29, 0x00, 0x00, 0x83, 0xb8, 0x40, 0x4c, 0x00, 0x00, 0x00},  //win8.1 - 6.3.9600.17415
     {0x81, 0x18, 0x2a, 0x00, 0x00, 0x83, 0xb8, 0xa0, 0x4c, 0x00, 0x00, 0x00},  //win10  - 10.0.10586.0
     {0x81, 0x18, 0x2a, 0x00, 0x00, 0x83, 0xb8, 0xa0, 0x4c, 0x00, 0x00, 0x00},  //win10  - 10.0.10586.494
+    {0x81, 0x18, 0x2a, 0x00, 0x00, 0x83, 0xb8, 0xa8, 0x4c, 0x00, 0x00, 0x00},  //win10  - 10.0.14393.0
     {0x8b, 0x80, 0xe8, 0x29, 0x00, 0x00, 0x39, 0x90, 0xb0, 0x4b, 0x00, 0x00},  //win8   - 6.2.9200.16384
 };
 
@@ -202,11 +205,11 @@ PatchInfo patch[NUM_KNOWN_PATCHES] =
     NewPatch(ignoreJump),
     NewPatch(ignoreJump),
     NewPatch(ignoreJump),
+    NewPatch(ignoreJump),
     NewPatch(forceJump),
 };
 
 #endif
-
 
 int GetD3D9PatchType()
 {
@@ -231,6 +234,76 @@ LPBYTE GetD3D9PatchAddress()
     return NULL;
 }
 
+//-----------------------------------------------------------------
+// new workaround for GPU copy stuff
+
+static bool offsetWorkaround = false;
+static UINT32 offset_D3D9 = 0;
+static UINT32 offset_isD3D9Ex = 0;
+
+#ifdef _WIN64
+#define CMP_SIZE 21
+static const BYTE mask[CMP_SIZE] = {0xF8, 0xFF, 0xC0, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xC0, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x00, 0xF8, 0xF8, 0x00, 0x00, 0x00, 0x00};
+static const BYTE mask_cmp[CMP_SIZE] = {0x48, 0x8B, 0x80, 0x00, 0x00, 0x00, 0x00, 0x39, 0x80, 0x00, 0x00, 0x00, 0x00, 0x75, 0x00, 0x40, 0xB8, 0x00, 0x00, 0x00, 0x00};
+#else
+
+#define CMP_SIZE 19
+static const BYTE mask[CMP_SIZE] = {0xFF, 0xC0, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xC0, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0x00, 0x00, 0x00};
+static const BYTE mask_cmp[CMP_SIZE] = {0x8B, 0x80, 0x00, 0x00, 0x00, 0x00, 0x39, 0x80, 0x00, 0x00, 0x00, 0x00, 0x75, 0x00, 0x68, 0x00, 0x00, 0x00, 0x00};
+#endif
+
+#define MAX_FUNC_SCAN_BYTES 200
+
+static inline bool PatternMatches(BYTE *byte)
+{
+    for (size_t i = 0; i < CMP_SIZE; i++) {
+        if ((byte[i] & mask[i]) != mask_cmp[i])
+            return false;
+    }
+
+    return true;
+}
+
+static void FindD3D9ExOffsets(IDirect3D9Ex *d3d9ex, IDirect3DDevice9Ex *dev)
+{
+    BYTE **vt = *(BYTE***)dev;
+    BYTE *crr = vt[125];
+
+    for (size_t i = 0; i < MAX_FUNC_SCAN_BYTES; i++) {
+        if (PatternMatches(&crr[i])) {
+#define GetOffset(x) *(UINT32*)(&crr[i + x])
+#ifdef _WIN64
+            UINT32 off1 = GetOffset(3);
+            UINT32 off2 = GetOffset(9);
+#else
+            UINT32 off1 = GetOffset(2);
+            UINT32 off2 = GetOffset(8);
+#endif
+
+            if (off1 > 0xFFFF || off2 > 0xFFFF)
+                break;
+
+            __try {
+                BYTE *ptr = (BYTE*)(dev);
+                BYTE *d3d9_ptr = *(BYTE**)(ptr + off1);
+
+                BOOL &is_d3d9ex = *(BOOL*)(d3d9_ptr + off2);
+                if (is_d3d9ex != TRUE)
+                    continue;
+
+            } __except(EXCEPTION_EXECUTE_HANDLER) {
+                break;
+            }
+
+            offset_D3D9 = off1;
+            offset_isD3D9Ex = off2;
+            offsetWorkaround = true;
+            break;
+        }
+    }
+}
+
+//-----------------------------------------------------------------
 
 void ClearD3D9Data()
 {
@@ -449,9 +522,13 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
     LPBYTE patchAddress = (patchType != 0) ? GetD3D9PatchAddress() : NULL;
     DWORD dwOldProtect;
     size_t patch_size;
+    BOOL *pIsD3D9Ex = nullptr;
+    BOOL wasD3D9Ex = false;
 
     if(patchAddress)
     {
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9GPUHook: offset workaround appears unavailable" << endl;
+
         patch_size = patch[patchType-1].patchSize;
         savedData = (BYTE*)malloc(patch_size);
         if(VirtualProtect(patchAddress, patch_size, PAGE_EXECUTE_READWRITE, &dwOldProtect))
@@ -465,6 +542,17 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
             goto finishGPUHook;
         }
     }
+    else if (offsetWorkaround)
+    {
+        RUNEVERYRESET logOutput << CurrentTimeString() << "DoD3D9GPUHook: using offset workaround" << endl;
+
+        BYTE *devicePtr = (BYTE*)device;
+        BYTE *d3d9Ptr = *(BYTE**)(devicePtr + offset_D3D9);
+        pIsD3D9Ex = (BOOL*)(d3d9Ptr + offset_isD3D9Ex);
+
+        wasD3D9Ex = *pIsD3D9Ex;
+        *pIsD3D9Ex = true;
+    }
 
     IDirect3DTexture9 *d3d9Tex;
     if(FAILED(hErr = device->CreateTexture(d3d9CaptureInfo.cx, d3d9CaptureInfo.cy, 1, D3DUSAGE_RENDERTARGET, (D3DFORMAT)d3d9Format, D3DPOOL_DEFAULT, &d3d9Tex, &sharedHandle)))
@@ -477,6 +565,10 @@ void DoD3D9GPUHook(IDirect3DDevice9 *device)
     {
         memcpy(patchAddress, savedData, patch_size);
         VirtualProtect(patchAddress, patch_size, dwOldProtect, &dwOldProtect);
+    }
+    else if (offsetWorkaround)
+    {
+        *pIsD3D9Ex = wasD3D9Ex;
     }
 
     if(FAILED(hErr = d3d9Tex->GetSurfaceLevel(0, &copyD3D9TextureGame)))
@@ -727,7 +819,7 @@ void DoD3D9DrawStuff(IDirect3DDevice9 *device)
             if(bD3D9Ex)
                 bUseSharedTextures = true;
             else
-                bUseSharedTextures = (patchType = GetD3D9PatchType()) != 0;
+                bUseSharedTextures = offsetWorkaround || (patchType = GetD3D9PatchType()) != 0;
 
             //fix for when backbuffers aren't actually being properly used, instead get the
             //size/format of the actual current render target at time of present
@@ -1292,6 +1384,8 @@ bool InitD3D9Capture()
                     d3d9EndScene.Hook((FARPROC)*(vtable+(168/4)), (FARPROC)D3D9EndScene);
                     /*d3d9ResetEx.Hook((FARPROC)*(vtable+(528/4)), (FARPROC)D3D9ResetEx);
                     d3d9Reset.Hook((FARPROC)*(vtable+(64/4)), (FARPROC)D3D9Reset);*/
+
+                    FindD3D9ExOffsets(d3d9ex, deviceEx);
 
                     deviceEx->Release();
 
