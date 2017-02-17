@@ -1108,7 +1108,7 @@ void OBS::SetFullscreenMode(bool fullscreen)
         int y = monitorInfo.rcMonitor.top;
         int cx = monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left;
         int cy = monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top;
-        SetWindowPos(hwndMain, HWND_TOPMOST, x, y, cx, cy, SWP_FRAMECHANGED);
+        SetWindowPos(hwndMain, (App->bAlwaysOnTop)?HWND_TOPMOST:HWND_NOTOPMOST, x, y, cx, cy, SWP_FRAMECHANGED);
 
         // Update menu checkboxes
         CheckMenuItem(hmenuMain, ID_FULLSCREENMODE, MF_CHECKED);
